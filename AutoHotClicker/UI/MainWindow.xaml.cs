@@ -13,9 +13,11 @@ namespace AutoHotClicker;
 
 public partial class MainWindow : Window
 {
-    public static KeybindRecorder? _keybindRecorder;
+    private static KeybindRecorder? keybindRecorder;
     private readonly ProgramConfig _programConfig;
     private KeyConfig _keyConfig;
+
+    public static KeybindRecorder? KeybindRecorder { get => keybindRecorder; set => keybindRecorder = value; }
 
     public MainWindow()
     {
@@ -29,8 +31,8 @@ public partial class MainWindow : Window
         keyManager.Load();
         _keyConfig = keyManager.Config;
 
-        _keybindRecorder = new KeybindRecorder(this);
-        StartStopActionsHotKey.AttachKeyRecorder(_keybindRecorder, new Action(() =>
+        KeybindRecorder = new KeybindRecorder(this);
+        StartStopActionsHotKey.AttachKeyRecorder(KeybindRecorder, new Action(() =>
         {
             KeyActions keyActions = new();
             keyActions = KeyExtensions.CreateOrUpdateHotkeyData(StartStopActionsHotKey);
@@ -123,7 +125,7 @@ public partial class MainWindow : Window
                 ConfigManager<ProgramConfig> configManager = new("Data/config.json");
                 configManager.Config.LastConfigPath = _programConfig.LastConfigPath;
                 configManager.Save();
-                
+
                 ConfigManager<KeyConfig> keyManager = new(_programConfig.LastConfigPath);
                 keyManager.Load();
                 _keyConfig = keyManager.Config;
@@ -161,10 +163,15 @@ public partial class MainWindow : Window
 
     private void CreateKeyActionButton_Click(object sender, RoutedEventArgs e)
     {
+        if (KeybindRecorder == null)
+        {
+            return;
+        }
+
         KeyAction keyAction = KeyAction.Timer;
-        
+
         TextBox keybindTextbox = new();
-        keybindTextbox.AttachKeyRecorder(_keybindRecorder);
+        keybindTextbox.AttachKeyRecorder(KeybindRecorder);
         ControlHelper.SetHeader(keybindTextbox, "Keybind:");
         ControlHelper.SetCornerRadius(keybindTextbox, new CornerRadius(0));
 
@@ -184,7 +191,7 @@ public partial class MainWindow : Window
         ContentDialog createKeyDialog = new()
         {
             Title = "Create new key action",
-            Content = new SimpleStackPanel() 
+            Content = new SimpleStackPanel()
             {
                 Spacing = 5,
                 Children =
@@ -201,7 +208,7 @@ public partial class MainWindow : Window
         {
             KeyActions keyActions = new();
             keyActions = KeyExtensions.CreateOrUpdateHotkeyData(keybindTextbox);
-            
+
             if (keyActionComboBox.SelectedItem != null)
             {
                 keyAction = (KeyAction)keyActionComboBox.SelectedItem;
@@ -240,7 +247,7 @@ public partial class MainWindow : Window
 
     private void EditKeyActionButton_Click(object sender, RoutedEventArgs e)
     {
-        if (KeyListView.SelectedItem != null)
+        if (KeyListView.SelectedItem != null && KeybindRecorder != null)
         {
             if (_keyConfig._isRunningAutoKeyClickerThread)
             {
@@ -256,7 +263,7 @@ public partial class MainWindow : Window
             {
                 Text = keyActions.ToString()
             };
-            keybindTextbox.AttachKeyRecorder(_keybindRecorder);
+            keybindTextbox.AttachKeyRecorder(KeybindRecorder);
             ControlHelper.SetHeader(keybindTextbox, "Keybind:");
             ControlHelper.SetCornerRadius(keybindTextbox, new CornerRadius(0));
 
@@ -282,11 +289,11 @@ public partial class MainWindow : Window
                 {
                     Spacing = 5,
                     Children =
-                {
-                    keybindTextbox,
-                    delayTextbox,
-                    keyActionComboBox
-                }
+                    {
+                        keybindTextbox,
+                        delayTextbox,
+                        keyActionComboBox
+                    }
                 },
                 PrimaryButtonText = "Edit",
                 CloseButtonText = "Cancel"

@@ -41,7 +41,7 @@ public partial class KeyConfig : ObservableObject
 
     private void OnStartOrStopKeybind(object? sender, HotkeyEventArgs e)
     {
-        if (KeyActions.Count == 0 && MainWindow._keybindRecorder != null && MainWindow._keybindRecorder._isRecording)
+        if (KeyActions.Count == 0 && MainWindow.KeybindRecorder != null && MainWindow.KeybindRecorder._isRecording)
         {
             return;
         }
